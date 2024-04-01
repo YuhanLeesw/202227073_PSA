@@ -6,7 +6,7 @@ public class Shooter : MonoBehaviour
 {
     public GameObject bulletPrefab; // 총알 프리팹
     public Transform bulletSpawnPoint; // 총알이 생성될 위치
-    /*public Queue<GameObject> bulletQueue = new Queue<GameObject>(); // 총알을 관리할 큐*/
+    public Queue<GameObject> bulletQueue = new Queue<GameObject>(); // 총알을 관리할 큐
     public StackUsingQueues<GameObject> bulletStack = new StackUsingQueues<GameObject>(); //총알을 관리할 스택
 
     void Start()
@@ -42,8 +42,7 @@ public class Shooter : MonoBehaviour
             bullet.SetActive(true); // 총알을 활성화 상태로 변경
            
 
-        }
-        
+        }       
 
     }
    
