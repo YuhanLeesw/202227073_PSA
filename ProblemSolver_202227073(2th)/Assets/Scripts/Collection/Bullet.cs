@@ -12,7 +12,6 @@ public class Bullet : MonoBehaviour
         
     }
 
-    // Update is called once per frame
     void Update()
     {
         //총알 지정된 방향과 속도로 이동

@@ -39,11 +39,9 @@ public class Shooter : MonoBehaviour
         {
             GameObject bullet = bulletStack.Pop(); // 스택에서 총알 하나를 제거
             bullet.transform.position = bulletSpawnPoint.position; // 총알의 위치를 발사 지점으로 설정
-            bullet.SetActive(true); // 총알을 활성화 상태로 변경
-           
+            bullet.SetActive(true); // 총알을 활성화 상태로 변경          
 
         }       
-
     }
    
 }

@@ -38,7 +38,7 @@ public class Target : MonoBehaviour
             if (hitCollider.gameObject.CompareTag("Bullet")) // 감지된 객체가 총알인지 확인
             {
                 hitCollider.gameObject.SetActive(false); // 총알을 비활성화
-                shooter.bulletStack.Push(hitCollider.gameObject); // 비활성화된 총알을 스택에 다시 추가
+                shooter.bulletStack.queue1.Enqueue(hitCollider.gameObject); // 비활성화된 총알을 스택에 다시 추가
             }
         }
     }
