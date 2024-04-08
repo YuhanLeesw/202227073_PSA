@@ -359,6 +359,7 @@
 "Assets/Scripts/Collection/Queue.cs"
 "Assets/Scripts/Collection/Shooter.cs"
 "Assets/Scripts/Collection/Stack.cs"
+"Assets/Scripts/Collection/StaticMeshGen.cs"
 "Assets/Scripts/Collection/Target.cs"
 -langversion:9.0
 
