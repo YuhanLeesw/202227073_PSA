@@ -59,10 +59,12 @@ public class StaticMeshGen : MonoBehaviour
         MeshRenderer mr = GetComponent<MeshRenderer>() ?? gameObject.AddComponent<MeshRenderer>(); // MeshRenderer 컴포넌트를 가져오거나 없으면 추가
 
         mf.mesh = mesh;// 메시를 MeshFilter 컴포넌트에 할당
+        // 법선 벡터 계산 및 할당
+        CalculateNormals(mesh, mesh.vertices, mesh.triangles);
 
         // 노란색 재질을 생성하고 메시에 적용
         MeshRenderer meshRenderer = GetComponent<MeshRenderer>() ?? gameObject.AddComponent<MeshRenderer>();
-        Material yellowMaterial = new Material(Shader.Find("Custom/YellowShader"));
+        Material yellowMaterial = new Material(Shader.Find("Custom/CartoonShader"));
         meshRenderer.sharedMaterial = yellowMaterial;
     }
 
@@ -141,6 +143,46 @@ public class StaticMeshGen : MonoBehaviour
 
         return triangles.ToArray();
     }
+
+    // 메시의 법선을 수동으로 계산하고 설정하는 메서드
+    public void CalculateNormals(Mesh mesh, Vector3[] vertices, int[] triangles)
+    {
+        Vector3[] normals = new Vector3[vertices.Length];
+
+        // 모든 정점에 대해 법선을 0으로 초기화
+        for (int i = 0; i < normals.Length; i++)
+        {
+            normals[i] = Vector3.zero;
+        }
+
+        // 삼각형의 각 꼭지점에 대한 법선을 누적
+        for (int i = 0; i < triangles.Length; i += 3)
+        {
+            int index0 = triangles[i];
+            int index1 = triangles[i + 1];
+            int index2 = triangles[i + 2];
+
+            // 삼각형의 법선 계산
+            Vector3 triangleNormal = Vector3.Cross(
+                vertices[index1] - vertices[index0],
+                vertices[index2] - vertices[index0]).normalized;
+
+            normals[index0] += triangleNormal;
+            normals[index1] += triangleNormal;
+            normals[index2] += triangleNormal;
+        }
+
+        // 누적된 법선을 정규화하여 평균화
+        for (int i = 0; i < normals.Length; i++)
+        {
+            normals[i].Normalize();
+        }
+
+        // 메시에 법선 배열 할당
+        mesh.normals = normals;
+    }
+
+
 
     // Update is called once per frame
     void Update()
