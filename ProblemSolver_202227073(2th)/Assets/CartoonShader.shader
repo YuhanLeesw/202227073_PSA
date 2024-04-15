@@ -2,58 +2,72 @@ Shader "Custom/CartoonShader"
 {
     Properties
     {
-        _DiffuseColor("DiffuseColor", Color) = (1,1,0,1)
-        _LightDirection("LightDirection", Vector) = (1,-1,-1,0)
+        _Color("Color", Color) = (1,1,1,1)
+        _MainTex("Texture", 2D) = "white" {}
+        _DivideLevel("Divide Level", Int) = 5
     }
         SubShader
-    {
-        Tags { "RenderType" = "Opaque" }
-
-
-        Pass
         {
+            Pass
+            {
+                Tags { "RenderType" = "Opaque" "LightMode" = "ForwardBase"}
+                LOD 200
+            //Blend SrcAlpha OneMinusSrcAlpha
+
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-
+            #pragma target 3.0
+            #pragma multi_compile_fwdbase nolightmap nodirlightmap nodynlightmap novertexlight
             #include "UnityCG.cginc"
+            #include "Lighting.cginc"
+            #include "AutoLight.cginc"
 
-            struct appdata
-            {
-                float4 vertex : POSITION;
-                float3 normal : NORMAL;
-            };
+            sampler2D _MainTex;
+            int _DivideLevel;
+            fixed4 _Color;
 
             struct v2f
             {
-                float4 vertex : SV_POSITION;
-                float3 normal : NORMAL;
+                float4 pos : SV_POSITION;
+                float2 uv : TEXCOORD0;
+                float3 worldNormal : NORMAL;
+                SHADOW_COORDS(1)
             };
 
-            float4 _DiffuseColor;
-            float4 _LightDirection;
-
-            v2f vert(appdata v)
+            v2f vert(appdata_base v)
             {
                 v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.normal = UnityObjectToWorldNormal(v.normal);  // 법선 벡터를 월드 공간으로 변환
+
+                o.pos = UnityObjectToClipPos(v.vertex);
+                o.uv = v.texcoord;
+                o.worldNormal = UnityObjectToWorldNormal(v.normal);
+
+                TRANSFER_SHADOW(o);
+
                 return o;
             }
 
+
             fixed4 frag(v2f i) : SV_Target
             {
-                float ambientStrength = 0.2;
-                float4 ambient = ambientStrength * float4(1.0, 1.0, 1.0, 1.0);
+                fixed4 col = tex2D(_MainTex, i.uv);
 
-                float4 lightDir = normalize(_LightDirection);  // 조명 방향 정규화
-                float lightIntensity = max(dot(i.normal, lightDir), 0);  // 조명 강도 계산
+                half3 ambient = ShadeSH9(half4(i.worldNormal, 1));
+                half diffuse = max(0, dot(i.worldNormal, _WorldSpaceLightPos0.xyz));
 
-                float4 col = (_DiffuseColor * lightIntensity) + ambient;  // 최종 색상 계산
+                fixed shadow = SHADOW_ATTENUATION(i);
 
+                float3 lighting = diffuse * shadow;
+                lighting = ceil(lighting * _DivideLevel) / _DivideLevel;
+                lighting *= _LightColor0.rgb;
+                lighting += ambient;
+
+                col.rgb *= _Color * lighting;
                 return col;
             }
             ENDCG
         }
-    }
+        }
+            FallBack "Diffuse"
 }
