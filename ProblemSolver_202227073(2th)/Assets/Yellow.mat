@@ -30,6 +30,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _Brightness: 1.54
+    - _DivideLevel: 3.47
     - _Glossiness: 0.5
     - _Metallic: 0
     m_Colors:
