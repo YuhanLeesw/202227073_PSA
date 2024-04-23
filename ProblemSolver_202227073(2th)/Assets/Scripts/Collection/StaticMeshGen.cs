@@ -189,7 +189,7 @@ public class StaticMeshGen : MonoBehaviour
             normals[triangles[i + 2]] += normal;
         }
 
-<<<<<<< Updated upstream
+
         // 법선을 정규화
         for (int i = 0; i < normals.Length; i++)
         {
@@ -204,7 +204,7 @@ public class StaticMeshGen : MonoBehaviour
         // Material 할당
         if (material != null)
             mr.materials = new Material[] { material };
-=======
+
         // 두 별의 꼭지점을 하나의 리스트로 합침
         List<Vector3> combinedVertices = new List<Vector3>(Star1);
         combinedVertices.AddRange(Star2); // 두 번째 별의 정점을 추가
@@ -220,13 +220,12 @@ public class StaticMeshGen : MonoBehaviour
   
         MeshFilter mf = GetComponent<MeshFilter>() ?? gameObject.AddComponent<MeshFilter>(); // MeshFilter 컴포넌트를 가져오거나 없으면 추가  
         MeshRenderer mr = GetComponent<MeshRenderer>() ?? gameObject.AddComponent<MeshRenderer>(); // MeshRenderer 컴포넌트를 가져오거나 없으면 추가
->>>>>>> Stashed changes
+
 
 
         mf.mesh = mesh;
     }
-<<<<<<< Updated upstream
-=======
+
 
     // 주어진 반지름과 점의 수를 기준으로 별 모양의 꼭지점을 계산하는 메서드
     Vector3[] CalculateStarVertices(float innerRadius, float outerRadius, int numPoints)
@@ -333,7 +332,7 @@ public class StaticMeshGen : MonoBehaviour
         return normals;
     }
 
->>>>>>> Stashed changes
+
     // Update is called once per frame
     void Update()
     {
