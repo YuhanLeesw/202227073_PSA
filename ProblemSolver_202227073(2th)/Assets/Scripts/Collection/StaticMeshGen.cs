@@ -189,7 +189,6 @@ public class StaticMeshGen : MonoBehaviour
             normals[triangles[i + 2]] += normal;
         }
 
-
         // 법선을 정규화
         for (int i = 0; i < normals.Length; i++)
         {
@@ -205,134 +204,9 @@ public class StaticMeshGen : MonoBehaviour
         if (material != null)
             mr.materials = new Material[] { material };
 
-        // 두 별의 꼭지점을 하나의 리스트로 합침
-        List<Vector3> combinedVertices = new List<Vector3>(Star1);
-        combinedVertices.AddRange(Star2); // 두 번째 별의 정점을 추가
-        Star1 = combinedVertices.ToArray();
-   
-        mesh.vertices = Star1; // 메시에 정점 배열 할당
-        
-        // 법선 벡터 계산 및 할당
-        mesh.normals = CalculateNormals(mesh.vertices, mesh.triangles);
-        mesh.triangles = GenerateTriangles(Star1);// 메시의 삼각형을 생성하고 할당
-
-        
-  
-        MeshFilter mf = GetComponent<MeshFilter>() ?? gameObject.AddComponent<MeshFilter>(); // MeshFilter 컴포넌트를 가져오거나 없으면 추가  
-        MeshRenderer mr = GetComponent<MeshRenderer>() ?? gameObject.AddComponent<MeshRenderer>(); // MeshRenderer 컴포넌트를 가져오거나 없으면 추가
-
-
 
         mf.mesh = mesh;
     }
-
-
-    // 주어진 반지름과 점의 수를 기준으로 별 모양의 꼭지점을 계산하는 메서드
-    Vector3[] CalculateStarVertices(float innerRadius, float outerRadius, int numPoints)
-    {
-        List<Vector3> Star1 = new List<Vector3>();
-        float angleStep = 360.0f / (numPoints * 2);  // 꼭지점 사이의 각도를 계산
-        float angleOffset = 90.0f; // 첫 번째 꼭지점을 수직으로 올리기 위한 각도 조정
-
-        Star1.Add(Vector3.zero);// 오각별의 중심점을 추가
-
-        
-        for (int i = 0; i < numPoints * 2; i++)// 별의 바깥쪽과 안쪽 꼭지점을 번갈아가면서 계산
-        {
-            float angle = Mathf.Deg2Rad * (i * angleStep + angleOffset); // 각도에 오프셋 추가
-            float radius = (i % 2 == 0) ? outerRadius : innerRadius; // 짝수 인덱스에서는 외부 반지름, 홀수 인덱스에서는 내부 반지름 사용
-            Vector3 vertex = new Vector3(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, 0);
-            Star1.Add(vertex);
-        }
-
-        // 첫 번째 외부 꼭지점을 다시 추가하여 별 모양이 닫히도록 함
-        Star1.Add(Star1[1]); // 별의 외곽선이 닫히도록 마지막에 첫 번째 외부 꼭지점을 다시 추가
-
-        return Star1.ToArray();
-    }
-
-
-    // 정점 배열을 기반으로 메쉬의 삼각형 배열을 생성하는 메서드
-    int[] GenerateTriangles(Vector3[] vertices)
-    {
-        List<int> triangles = new List<int>();
-
-        int halfLength = vertices.Length / 2; // Star1과 Star2 각각의 꼭지점 수
-
-        // 각 별에 대해 앞면과 뒷면의 삼각형 생성
-        for (int i = 0; i < halfLength - 1; i++)
-        {
-            int next = (i + 1) % (halfLength - 1);
-            int nextPlusOne = (i + 2) % (halfLength - 1);
-
-            // 앞면 삼각형
-            triangles.Add(0); // 중심점
-            triangles.Add(next); // 다음 꼭지점
-            triangles.Add(i + 1); // 현재 꼭지점
-
-            // 뒷면 삼각형 (반대 방향)
-            triangles.Add(halfLength); // 중심점
-            triangles.Add(halfLength + i + 1); // 현재 꼭지점
-            triangles.Add(halfLength + next); // 다음 꼭지점
-        }
-
-        // Star1과 Star2를 연결하는 삼각형에 대해서도 동일하게 적용
-        for (int i = 1; i < halfLength - 1; i++)
-        {
-            // Star1 -> Star2 -> Star2
-            triangles.Add(i);
-            triangles.Add(i + halfLength);
-            triangles.Add(i + halfLength + 1);
-
-            // 반대 방향 (뒷면)
-            triangles.Add(i + halfLength + 1);
-            triangles.Add(i + halfLength);
-            triangles.Add(i);
-
-            // Star1 -> Star2 -> Star1
-            triangles.Add(i);
-            triangles.Add(i + halfLength + 1);
-            triangles.Add(i + 1);
-
-            // 반대 방향 (뒷면)
-            triangles.Add(i + 1);
-            triangles.Add(i + halfLength + 1);
-            triangles.Add(i);
-        }
-
-        return triangles.ToArray();
-    }
-
-    // 법선 벡터를 계산하는 메서드
-    private Vector3[] CalculateNormals(Vector3[] vertices, int[] triangles)
-    {
-        Vector3[] normals = new Vector3[vertices.Length];
-        Vector3[] triangleNormals = new Vector3[triangles.Length / 3];
-
-        // 삼각형의 법선 계산
-        for (int i = 0; i < triangles.Length; i += 3)
-        {
-            Vector3 v1 = vertices[triangles[i]];
-            Vector3 v2 = vertices[triangles[i + 1]];
-            Vector3 v3 = vertices[triangles[i + 2]];
-            Vector3 normal = Vector3.Cross(v2 - v1, v3 - v1).normalized;
-            triangleNormals[i / 3] = normal;
-
-            normals[triangles[i]] += normal;
-            normals[triangles[i + 1]] += normal;
-            normals[triangles[i + 2]] += normal;
-        }
-
-        // 정점의 법선을 평균하고 정규화
-        for (int i = 0; i < normals.Length; i++)
-        {
-            normals[i] = normals[i].normalized;
-        }
-
-        return normals;
-    }
-
-
     // Update is called once per frame
     void Update()
     {

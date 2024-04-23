@@ -1,5 +1,5 @@
 sceneSetups:
-- path: Assets/Midterm exam/Scenes/LEESUNGWOO.unity
+- path: Assets/Midterm/Scene/JailBreak.unity
   isLoaded: 1
   isActive: 1
   isSubScene: 0

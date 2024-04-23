@@ -1,243 +1,53 @@
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+Shader "Custom/CellShader"
+{
+    Properties
+    {
+        _Color ("Color", Color) = (1,1,1,1)
+        _MainTex ("Albedo (RGB)", 2D) = "white" {}
+        _Glossiness ("Smoothness", Range(0,1)) = 0.5
+        _Metallic ("Metallic", Range(0,1)) = 0.0
+    }
+    SubShader
+    {
+        Tags { "RenderType"="Opaque" }
+        LOD 200
 
-Shader "Cell Shading/Team Fortress 2"{
-	Properties
-	{
-		_DiffTex("Diffuse Texture", 2D) = "white" {}
-        _DiffColor("Diffuse Color", Color) = (1, 1, 1, 1)
-		_NormalMap("Normal Map", 2D) = "bump" {}
-		_RampTex("Ramp Texture", 2D) = "white" {}
-		_SpecExp("Specular Exponent", Range(0.1, 150)) = 20.0
-		_SpecBoost("Specular Boost", Float) = 0.3
-		_RimExp("Rim Light Exponent", Range(0.1, 150)) = 4.0
-		_RimBoost("Rim Light Boost", Float) = 2.0
-	}
+        CGPROGRAM
+        // Physically based Standard lighting model, and enable shadows on all light types
+        #pragma surface surf Standard fullforwardshadows
 
-	Subshader
-	{
-		Pass
-		{
+        // Use shader model 3.0 target, to get nicer looking lighting
+        #pragma target 3.0
 
-			Tags { "LightMode" = "ForwardBase" }
+        sampler2D _MainTex;
 
-			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
-			#pragma multi_compile_fwdbase
-			#include "AutoLight.cginc"
-			#include "UnityCG.cginc"
+        struct Input
+        {
+            float2 uv_MainTex;
+        };
 
-			// Properties
-			uniform sampler2D _DiffTex;
-            uniform float4 _DiffColor;
-			uniform float4 _DiffTex_ST;
-			uniform sampler2D _NormalMap;
-			uniform float4 _NormalMap_ST;
-			uniform sampler2D _RampTex;
-			uniform float _SpecExp;
-			uniform float _SpecBoost;
-			uniform float _RimExp;
-			uniform float _RimBoost;
+        half _Glossiness;
+        half _Metallic;
+        fixed4 _Color;
 
-			// Unity
-			uniform float4 _LightColor0;
+        // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
+        // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
+        // #pragma instancing_options assumeuniformscaling
+        UNITY_INSTANCING_BUFFER_START(Props)
+            // put more per-instance properties here
+        UNITY_INSTANCING_BUFFER_END(Props)
 
-			struct a2v
-			{
-				float4 vertex : POSITION;
-				float3 normal : NORMAL;
-				float4 tangent : TANGENT;
-				float4 texcoord : TEXCOORD0;
-			};
-
-			struct v2f
-			{
-				float4 pos : SV_POSITION;
-				float4 tex : TEXCOORD0;
-				float3 posWorld : TEXCOORD1;
-				float3 normal : TEXCOORD2;
-				float3 tangent : TEXCOORD3;
-				float3 binormal : TEXCOORD4;
-				float3 viewDir : TEXCOORD5;
-				float3 lightDir : TEXCOORD6;
-				LIGHTING_COORDS(7, 8)
-			};
-
-			v2f vert(a2v v)
-			{
-				v2f o;
-
-				o.pos = UnityObjectToClipPos(v.vertex);
-				o.tex = v.texcoord;
-				o.posWorld = mul(unity_ObjectToWorld, v.vertex);
-
-				o.normal = mul(float4(v.normal, 0.0), unity_WorldToObject).xyz;
-				o.tangent  = mul(unity_ObjectToWorld, v.tangent).xyz;
-				float tangentSign = v.tangent.w * unity_WorldTransformParams.w;
-				o.binormal = cross(o.normal, o.tangent) * tangentSign;
-				o.viewDir = _WorldSpaceCameraPos.xyz - o.posWorld;
-				o.lightDir = UnityWorldSpaceLightDir(o.posWorld);
-
-				TRANSFER_VERTEX_TO_FRAGMENT(o);
-
-				return o;
-			}
-
-			float4 frag(v2f i) : COLOR
-			{
-				// Directions
-				i.normal = normalize(i.normal);
-				i.tangent = normalize(i.tangent);
-				i.binormal = normalize(i.binormal);
-				i.lightDir = normalize(i.lightDir);
-				i.viewDir = normalize(i.viewDir);
-				float3 reflViewDir = reflect(-i.viewDir, i.normal);
-				float3 reflLightDir = reflect(-i.lightDir, i.normal);
-
-				// Normal
-				float3 normalTangentSpace = UnpackNormal(tex2D(_NormalMap, i.tex * _NormalMap_ST.xy + _NormalMap_ST.zw));
-				float3x3 tangentToWorldSpace = float3x3(i.tangent, i.binormal, i.normal);
-				float3 normal = mul(normalTangentSpace, tangentToWorldSpace);
-
-				// Albedo
-				float4 albedo = tex2D(_DiffTex, i.tex.xy * _DiffTex_ST.xy + _DiffTex_ST.zw) * _DiffColor;
-
-				// Lighting
-				float atten = LIGHT_ATTENUATION(i);
-
-				//// Diffuse
-				float nDotL = dot(normal, i.lightDir);
-				float4 ramp = tex2D(_RampTex, float2(nDotL * 0.5 + 0.5, 0.5));
-				float4 diffuse = atten * _LightColor0 * ramp; // * _DiffColor;
-
-				//// Specular
-				float vDotR = max(0.0, dot(i.viewDir, reflLightDir));
-				float4 specular = atten * _LightColor0 * _SpecBoost * pow(vDotR, _SpecExp);
-
-				//// Rim
-				float fr = pow(1 - max(0.0, dot(normal, i.viewDir)), 4);
-				float rim = fr * _RimBoost * pow(vDotR, _RimExp);
-
-				//// Dedicated Rim
-				float4 drim = max(0.0, dot(normal, float3(0, 1, 0))) * fr * _RimBoost;
-
-				float4 lighting = UNITY_LIGHTMODEL_AMBIENT + diffuse + specular + rim + drim;
-				float4 final = albedo * lighting;
-				return float4(final.rgb, 1.0);
-			}
-
-			ENDCG
-		}
-
-		Pass
-		{
-			Tags { "LightMode" = "ForwardAdd" }
-			Blend One One
-
-			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
-			#pragma multi_compile_fwdadd
-			#include "AutoLight.cginc"
-			#include "UnityCG.cginc"
-
-			// Properties
-			uniform sampler2D _DiffTex;
-			uniform float4 _DiffTex_ST;
-			uniform sampler2D _NormalMap;
-			uniform float4 _NormalMap_ST;
-			uniform sampler2D _RampTex;
-			uniform float _SpecExp;
-			uniform float _SpecBoost;
-			uniform float _RimExp;
-			uniform float _RimBoost;
-
-			// Unity
-			uniform float4 _LightColor0;
-
-			struct a2v
-			{
-				float4 vertex : POSITION;
-				float3 normal : NORMAL;
-				float4 tangent : TANGENT;
-				float4 texcoord : TEXCOORD0;
-			};
-
-			struct v2f
-			{
-				float4 pos : SV_POSITION;
-				float4 tex : TEXCOORD0;
-				float3 posWorld : TEXCOORD1;
-				float3 normal : TEXCOORD2;
-				float3 tangent : TEXCOORD3;
-				float3 binormal : TEXCOORD4;
-				float3 viewDir : TEXCOORD5;
-				float3 lightDir : TEXCOORD6;
-				LIGHTING_COORDS(7, 8)
-			};
-
-			v2f vert(a2v v)
-			{
-				v2f o;
-
-				o.pos = UnityObjectToClipPos(v.vertex);
-				o.tex = v.texcoord;
-				o.posWorld = mul(unity_ObjectToWorld, v.vertex);
-
-				o.normal = mul(float4(v.normal, 0.0), unity_WorldToObject).xyz;
-				o.tangent  = mul(unity_ObjectToWorld, v.tangent).xyz;
-				float tangentSign = v.tangent.w * unity_WorldTransformParams.w;
-				o.binormal = cross(o.normal, o.tangent) * tangentSign;
-				o.viewDir = _WorldSpaceCameraPos.xyz - o.posWorld;
-				o.lightDir = UnityWorldSpaceLightDir(o.posWorld);
-
-				TRANSFER_VERTEX_TO_FRAGMENT(o);
-
-				return o;
-			}
-
-			float4 frag(v2f i) : COLOR
-			{
-				// Directions
-				i.normal = normalize(i.normal);
-				i.tangent = normalize(i.tangent);
-				i.binormal = normalize(i.binormal);
-				i.lightDir = normalize(i.lightDir);
-				i.viewDir = normalize(i.viewDir);
-				float3 reflViewDir = reflect(-i.viewDir, i.normal);
-				float3 reflLightDir = reflect(-i.lightDir, i.normal);
-
-				// Normal
-				float3 normalTangentSpace = UnpackNormal(tex2D(_NormalMap, i.tex * _NormalMap_ST.xy + _NormalMap_ST.zw));
-				float3x3 tangentToWorldSpace = float3x3(i.tangent, i.binormal, i.normal);
-				float3 normal = mul(normalTangentSpace, tangentToWorldSpace);
-
-				// Albedo
-				float4 albedo = tex2D(_DiffTex, i.tex.xy * _DiffTex_ST.xy + _DiffTex_ST.zw);
-
-				// Lighting
-				float atten = LIGHT_ATTENUATION(i);
-
-				//// Diffuse
-				float nDotL = dot(normal, i.lightDir);
-				float4 ramp = tex2D(_RampTex, float2(nDotL * 0.5 + 0.5, 0.5));
-				float4 diffuse = atten * _LightColor0 * ramp;				
-
-				//// Specular
-				float vDotR = max(0.0, dot(i.viewDir, reflLightDir));
-				float4 specular = atten * _LightColor0 * _SpecBoost * pow(vDotR, _SpecExp);
-
-				//// Rim
-				float fr = pow(1 - max(0.0, dot(normal, i.viewDir)), 4);
-				float rim = atten * fr * _RimBoost * pow(vDotR, _RimExp);
-
-				float4 lighting = diffuse + specular + rim;
-				float4 final = albedo * lighting;
-				return float4(final.rgb, 1.0);
-			}
-
-			ENDCG
-		}
-	}
-	Fallback "Diffuse"
+        void surf (Input IN, inout SurfaceOutputStandard o)
+        {
+            // Albedo comes from a texture tinted by color
+            fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
+            o.Albedo = c.rgb;
+            // Metallic and smoothness come from slider variables
+            o.Metallic = _Metallic;
+            o.Smoothness = _Glossiness;
+            o.Alpha = c.a;
+        }
+        ENDCG
+    }
+    FallBack "Diffuse"
 }

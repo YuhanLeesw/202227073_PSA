@@ -1,4 +1,0 @@
-repository "ProblemSolver_202227073(2th)@dltjddn202227073@cloud"
-  path "/"
-    br "/main"
-    co "/main"

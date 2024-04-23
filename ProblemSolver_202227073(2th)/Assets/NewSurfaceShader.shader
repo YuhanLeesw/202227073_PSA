@@ -22,20 +22,17 @@ Shader "Custom/YellowShader"
                 struct appdata
                 {
                     float4 vertex : POSITION;
-                    float3 normals : NORMAL;
                 };
 
                 struct v2f
                 {
                     float4 pos : SV_POSITION;
-                    float3 normals : NORMAL;
                 };
 
                 v2f vert(appdata v)
                 {
                     v2f o;
                     o.pos = UnityObjectToClipPos(v.vertex);
-                    o.normals = v.normals;
                     return o;
                 }
 
