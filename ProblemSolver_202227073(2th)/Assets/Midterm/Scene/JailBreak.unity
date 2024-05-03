@@ -692,10 +692,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca2b0b432fbf3294aad13af23eace8d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  objects:
-  - {fileID: 0}
-  - {fileID: 7799259000964027342, guid: 5ed59b2c0f161504fbb1180480317fb8, type: 3}
-  - {fileID: 0}
+  redWallPrefab: {fileID: 3677462251477580486, guid: ec2f60c5853146c4a88691bf153c4386, type: 3}
+  greenSpacePrefab: {fileID: 832026168089664890, guid: 4eb35deac766aac4ebf8163e43da84e9, type: 3}
+  highWallPrefab: {fileID: 4295186474998909329, guid: 9282de6650e45db40933a8d085b5a686, type: 3}
+  terrain: {fileID: 1658894110}
 --- !u!1 &1685072065
 GameObject:
   m_ObjectHideFlags: 0

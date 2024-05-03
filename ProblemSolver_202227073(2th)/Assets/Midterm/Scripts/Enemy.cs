@@ -126,8 +126,23 @@ public class Enemy : MonoBehaviour
     void MoveTowards(Vector3 position)
     {
         Vector3 direction = (position - transform.position).normalized;
+        float checkDistance = 1.0f; // 벽 감지 거리 설정
+        RaycastHit hit;
+
+        // 현재 방향으로 벽이 있는지 레이캐스트로 확인
+        if (Physics.Raycast(transform.position, direction, out hit, checkDistance))
+        {
+            if (hit.collider.gameObject.CompareTag("Wall")) // "Wall"은 벽 오브젝트의 태그
+            {
+                // 벽을 감지하면, 현재 방향을 유지하여 계속 이동
+                transform.position += direction * speed * Time.deltaTime;
+                enemyCamera.transform.rotation = Quaternion.LookRotation(direction);
+                return;
+            }
+        }
+
+        // 벽이 없으면 정상적으로 이동
         transform.position += direction * speed * Time.deltaTime;
-        // 카메라가 에너미의 방향을 향하도록 설정
         enemyCamera.transform.rotation = Quaternion.LookRotation(direction);
     }
 
