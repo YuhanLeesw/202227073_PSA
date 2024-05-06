@@ -1,5 +1,5 @@
 sceneSetups:
-- path: Assets/Midterm/Scene/JailBreak.unity
+- path: Assets/Midterm/Scene/test12.unity
   isLoaded: 1
   isActive: 1
   isSubScene: 0
